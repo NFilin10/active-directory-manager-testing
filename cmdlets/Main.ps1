@@ -1,7 +1,8 @@
 # Define constants for assembly paths
 $NpgsqlPath = "./npgsql/lib/net8.0/Npgsql.dll"
 $LoggingAbstractionsPath = "./microsoft.extentions.logging.abstractions/lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll"
-Write-Host "DB_PORT: $Env:DB_PORT"
+Write-Host "DB_PORT: $Env:ADUsername"
+
 
 
 # Function to load required assemblies
