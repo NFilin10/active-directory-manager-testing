@@ -37,12 +37,11 @@ public class CommandIntegrationTest {
     private CommandWorker commandWorker;
 
     @Mock
-    private CommandService commandService;  // Inject CommandService to query the database
+    private CommandService commandService;
 
     private TestRestTemplate restTemplate;
 
-    private String createdSamAccountName;  // Store the SamAccountName of the created user
-
+    private String createdSamAccountName;
 
     private String getBaseUrl() {
         return "http://localhost:" + port;
@@ -56,7 +55,7 @@ public class CommandIntegrationTest {
     @Test
     @Order(1)
     public void testCreateNewUser() throws Exception {
-        // Create the payload for the POST request (user creation data)
+        // Define the payload for creating a user
         String payload = "{"
                 + "\"Name\": \"Test3 User\","
                 + "\"GivenName\": \"Test3\","
@@ -68,164 +67,153 @@ public class CommandIntegrationTest {
                 + "\"AccountPassword\": \"ComplexP@ssw0rd4567\""
                 + "}";
 
-        // Mock the result of the command execution
+        // Mock the execution of the create command
         String mockResult = "Command completed without output";
         Commands mockCommand = new Commands();
         mockCommand.setCommand("New-ADUser");
         mockCommand.setArguments(payload);
         mockCommand.setResult(mockResult);
         mockCommand.setExitCode(0);
+        mockCommand.setId(1L);  // Set a mock ID for the command
 
-        // Set a mock ID for the command to simulate it being saved in the database
-        mockCommand.setId(1L);  // Set a mock ID value
-
-        // Mock the execution of the command to return the mockCommand
         when(commandWorker.executeCommand("New-ADUser", payload)).thenReturn(mockCommand);
-
-        // Mock commandService.getCommand to return the mock command when queried with its ID
         when(commandService.getCommand(mockCommand.getId())).thenReturn(mockCommand);
 
-        // Send POST request to /users endpoint with the user creation payload
+        // Send POST request to create the user
         String url = getBaseUrl() + "/users";
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);  // Set correct content type for JSON
+        headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(payload, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                entity,  // Pass entity with payload and headers
-                String.class
-        );
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 
-        // Assert the correct response and verify the command was processed and returned successfully
+        // Assert the response is OK and matches expected result
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(mockResult, response.getBody());
 
-        // Now verify that the command was stored in the database
+        // Verify the command was processed correctly
         Commands savedCommand = commandService.getCommand(mockCommand.getId());
-
-        // Verify the attributes of the saved command
         assertNotNull(savedCommand);
         assertEquals("New-ADUser", savedCommand.getCommand());
         assertEquals(payload, savedCommand.getArguments());
         assertEquals(mockResult, savedCommand.getResult());
         assertEquals(0, savedCommand.getExitCode());
 
-        // Save the created user's SamAccountName for later deletion
+        // Save the SamAccountName for deletion in tearDown()
+        createdSamAccountName = "testuser3";
     }
-
-
 
     @Test
     @Order(2)
     public void testUpdateUser() throws Exception {
-        // Assuming the user already exists, so we will modify their data (e.g., change the surname)
-        String updatePayload = "{"
-                + "\"Identity\": \"testuser3\","
-                + "\"GivenName\": \"Test3\","
+
+        // Create the user
+        String payload = "{"
+                + "\"Name\": \"Test4 User\","
+                + "\"GivenName\": \"Test4\","
                 + "\"Surname\": \"User\","
-                + "\"SamAccountName\": \"testuser3update\","
-                + "\"UserPrincipalName\": \"testuser3@domain.com\","
+                + "\"SamAccountName\": \"testuser4\","
+                + "\"UserPrincipalName\": \"testuser4@domain.com\","
+                + "\"Path\": \"CN=Users,DC=Domain,DC=ee\","
+                + "\"Enabled\": true,"
+                + "\"AccountPassword\": \"ComplexP@ssw0rd4567\""
+                + "}";
+
+        Commands mockCreateCommand = new Commands();
+        mockCreateCommand.setCommand("New-ADUser");
+        mockCreateCommand.setArguments(payload);
+        mockCreateCommand.setExitCode(0);
+        mockCreateCommand.setId(2L);  // Use mock ID for the creation
+
+        when(commandWorker.executeCommand("New-ADUser", payload)).thenReturn(mockCreateCommand);
+        when(commandService.getCommand(mockCreateCommand.getId())).thenReturn(mockCreateCommand);
+
+        String createUrl = getBaseUrl() + "/users";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(payload, headers);
+
+        ResponseEntity<String> createResponse = restTemplate.exchange(createUrl, HttpMethod.POST, entity, String.class);
+        assertEquals(HttpStatus.OK, createResponse.getStatusCode());
+
+        // Mock the update command
+        String updatePayload = "{"
+                + "\"Identity\": \"testuser4\","
+                + "\"GivenName\": \"Test4\","
+                + "\"Surname\": \"User\","
+                + "\"SamAccountName\": \"testuser4update\","
+                + "\"UserPrincipalName\": \"testuser4@domain.com\","
                 + "\"Enabled\": true"
                 + "}";
 
-        // Mock the result of the update command execution
         String mockResult = "Command completed without output";
-        Commands mockCommand = new Commands();
-        mockCommand.setCommand("Set-ADUser");
-        mockCommand.setArguments(updatePayload);
-        mockCommand.setResult(mockResult);
-        mockCommand.setExitCode(0);
+        Commands mockUpdateCommand = new Commands();
+        mockUpdateCommand.setCommand("Set-ADUser");
+        mockUpdateCommand.setArguments(updatePayload);
+        mockUpdateCommand.setResult(mockResult);
+        mockUpdateCommand.setExitCode(0);
+        mockUpdateCommand.setId(3L);  // Use a different mock ID for the update
 
-        // Set a mock ID for the command to simulate it being saved in the database
-        mockCommand.setId(1L);
+        when(commandWorker.executeCommand("Set-ADUser", updatePayload)).thenReturn(mockUpdateCommand);
+        when(commandService.getCommand(mockUpdateCommand.getId())).thenReturn(mockUpdateCommand);
 
-        // Mock the execution of the command to return the mockCommand
-        when(commandWorker.executeCommand("Set-ADUser", updatePayload)).thenReturn(mockCommand);
+        // Perform the update
+        String updateUrl = getBaseUrl() + "/users";
+        HttpEntity<String> updateEntity = new HttpEntity<>(updatePayload, headers);
+        ResponseEntity<String> updateResponse = restTemplate.exchange(updateUrl, HttpMethod.PUT, updateEntity, String.class);
 
-        // Mock commandService.getCommand to return the mock command when queried with its ID
-        when(commandService.getCommand(mockCommand.getId())).thenReturn(mockCommand);
+        assertEquals(HttpStatus.OK, updateResponse.getStatusCode());
+        assertEquals(mockResult, updateResponse.getBody());
 
-        // Send PUT request to /users endpoint with the user update payload
-        String url = getBaseUrl() + "/users";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(updatePayload, headers);
+        createdSamAccountName = "testuser4update";
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                url,
-                HttpMethod.PUT,
-                entity,  // Pass entity with payload and headers
-                String.class
-        );
-
-        // Assert the correct response and verify the command was processed and returned successfully
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockResult, response.getBody());
-
-        // Now verify that the command was stored in the database
-        Commands savedCommand = commandService.getCommand(mockCommand.getId());
-
-        // Verify the attributes of the saved command
-        assertNotNull(savedCommand);
-        assertEquals("Set-ADUser", savedCommand.getCommand());
-        assertEquals(updatePayload, savedCommand.getArguments());
-        assertEquals(mockResult, savedCommand.getResult());
-        assertEquals(0, savedCommand.getExitCode());
-
-        // Save the updated user's SamAccountName for later deletion (if necessary)
-        createdSamAccountName = "testuser3update";  // Store the same SamAccountName for consistency in cleanup
-
-        String deleteUrl = getBaseUrl() + "/users";
-        MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-        params.add("Identity", createdSamAccountName);  // Use the Identity parameter for the filter
-
-        HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
-
-        ResponseEntity<String> deleteResponse = restTemplate.exchange(
-                deleteUrl,
-                HttpMethod.DELETE,
-                deleteEntity,
-                String.class
-        );
-
-        // Assert that the user was deleted successfully
-        assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
     }
 
+
+
     @Test
+    @Order(3)
     public void testGetUsers() throws Exception {
         MultiValueMap<String, Object> queryParams = new LinkedMultiValueMap<>();
         queryParams.add("Filter", "*");
         queryParams.add("SearchBase", "DC=Domain,DC=ee");
 
-        // Prepare mock data for the command execution
         String mockCommand = "Get-ADUser";
-
-        // Create a mock Commands object that mimics a successful command execution
         Commands command = new Commands();
         command.setCommand(mockCommand);
-        command.setArguments(queryParams.toString());  // Storing query params as a string
+        command.setArguments(queryParams.toString());
         command.setExitCode(0);
 
-        // Mock the JSON conversion to ensure that the queryParams are converted correctly
         String mockJson = "{\"Filter\":\"*\",\"SearchBase\":\"DC=Domain,DC=ee\"}";
-        // Mock the service calls
         when(commandWorker.executeCommand(mockCommand, mockJson)).thenReturn(command);
 
-        // Send GET request to /users endpoint with query parameters
         String url = getBaseUrl() + "/users?Filter=*&SearchBase=DC=Domain,DC=ee";
-        ResponseEntity<String> response = restTemplate.exchange(
-                url,  // Make GET request to the /users endpoint with query parameters in the URL
-                HttpMethod.GET,
-                new HttpEntity<>(null),
-                String.class
-        );
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null), String.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(Objects.requireNonNull(response.getBody()).contains("testuser2"));
     }
 
+    @AfterEach
+    public void cleanup() {
+        if (createdSamAccountName != null) {
 
+            // Send DELETE request to remove the created user using the Identity filter
+            String deleteUrl = getBaseUrl() + "/users";
+            MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+            params.add("Identity", createdSamAccountName);  // Use the Identity parameter for the filter
+
+            HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
+
+            ResponseEntity<String> deleteResponse = restTemplate.exchange(
+                    deleteUrl,
+                    HttpMethod.DELETE,
+                    deleteEntity,
+                    String.class
+            );
+
+            // Assert that the user was deleted successfully
+            assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
+        }
+    }
 }
