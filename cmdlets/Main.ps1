@@ -213,14 +213,7 @@ try {
                 }
             }
         
-            # Check if the user presses 'q' to exit
-            if ([console]::KeyAvailable) {
-                $key = [console]::ReadKey($true)
-                if ($key.Key -eq 'Q') {
-                    Write-Host "Exiting..."
-                    break
-                }
-            }
+       
             Start-Sleep 1
         } 
     } finally {
