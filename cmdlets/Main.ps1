@@ -1,7 +1,7 @@
 # Define constants for assembly paths
 $NpgsqlPath = "./npgsql/lib/net8.0/Npgsql.dll"
 $LoggingAbstractionsPath = "./microsoft.extentions.logging.abstractions/lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll"
-Write-Host "user: $Env:ADUsername"
+Write-Host "user: $Env:DB_PORT"
 
 
 
@@ -193,8 +193,7 @@ function Execute-ADCommand {
 
 try {
     Load-Assemblies
-    $dbport = [int]$Env:DB_PORT
-    $conn = Get-PostgreSQLConnection -User "$Env:db_user" -Password "$Env:db_password" -Database "$Env:db_name" -Server "$Env:db_host" -Port $dbport
+    $conn = Get-PostgreSQLConnection -User "$Env:db_user" -Password "$Env:db_password" -Database "$Env:db_name" -Server "$Env:db_host" -Port "$Env:DB_PORT"
 
     Write-Host "Welcome! The script will proceed with polling database for pending commands to execute"
     Write-Host "In order to quit please press 'q'..."
