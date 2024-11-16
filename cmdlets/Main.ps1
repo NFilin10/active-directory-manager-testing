@@ -189,7 +189,7 @@ function Execute-ADCommand {
 
 try {
     Load-Assemblies
-    $dbport = [int]$Env:db_port
+    $dbport = [int]$Env:DB_PORT
     $conn = Get-PostgreSQLConnection -User "$Env:db_user" -Password "$Env:db_password" -Database "$Env:db_name" -Server "$Env:db_host" -Port $dbport
 
     Write-Host "Welcome! The script will proceed with polling database for pending commands to execute"
