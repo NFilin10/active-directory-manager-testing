@@ -1,7 +1,6 @@
 # Define constants for assembly paths
 $NpgsqlPath = "./npgsql/lib/net8.0/Npgsql.dll"
 $LoggingAbstractionsPath = "./microsoft.extentions.logging.abstractions/lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll"
-Write-Host "user: $Env:db_port"
 
 
 
@@ -199,14 +198,6 @@ try {
     Write-Host "In order to quit please press 'q'..."
     Write-Host ""
     Write-Host "Listening to the database..."
-
-    # Print all environment variables
-   # Print all environment variables
-    Write-Host "Environment Variables:"
-    foreach ($envVar in $env.PSObject.Properties) {
-        Write-Host "$($envVar.Name) = $($envVar.Value)"
-    }
-
 
 
     try {
