@@ -195,6 +195,15 @@ try {
     Write-Host "In order to quit please press 'q'..."
     Write-Host ""
     Write-Host "Listening to the database..."
+
+    # Print all environment variables
+    Write-Host "Environment Variables:"
+    $envVars = $env:GetEnumerator() | Sort-Object Name
+    foreach ($envVar in $envVars) {
+        Write-Host "$($envVar.Name) = $($envVar.Value)" 
+    }
+
+
     try {
         while ($true) {  
             $commands = Get-PendingCommands -Connection $conn
