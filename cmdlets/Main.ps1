@@ -189,7 +189,8 @@ function Execute-ADCommand {
 
 try {
     Load-Assemblies
-    $conn = Get-PostgreSQLConnection -User "$Env:db_user" -Password "$Env:db_password" -Database "$Env:db_name" -Server "$Env:db_host" -Port "$Env:db_port"
+    $dbport = [int]$Env:db_port
+    $conn = Get-PostgreSQLConnection -User "$Env:db_user" -Password "$Env:db_password" -Database "$Env:db_name" -Server "$Env:db_host" -Port $dbport
 
     Write-Host "Welcome! The script will proceed with polling database for pending commands to execute"
     Write-Host "In order to quit please press 'q'..."
