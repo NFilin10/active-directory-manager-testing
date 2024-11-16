@@ -197,11 +197,12 @@ try {
     Write-Host "Listening to the database..."
 
     # Print all environment variables
+   # Print all environment variables
     Write-Host "Environment Variables:"
-    $envVars = $env:GetEnumerator() | Sort-Object Name
-    foreach ($envVar in $envVars) {
-        Write-Host "$($envVar.Name) = $($envVar.Value)" 
+    foreach ($envVar in $env.PSObject.Properties) {
+        Write-Host "$($envVar.Name) = $($envVar.Value)"
     }
+
 
 
     try {
