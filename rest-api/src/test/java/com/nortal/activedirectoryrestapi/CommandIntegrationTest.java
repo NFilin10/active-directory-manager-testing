@@ -41,7 +41,6 @@ public class CommandIntegrationTest {
 
     private TestRestTemplate restTemplate;
 
-    private String createdSamAccountName;
 
     private String getBaseUrl() {
         return "http://localhost:" + port;
@@ -99,7 +98,22 @@ public class CommandIntegrationTest {
         assertEquals(0, savedCommand.getExitCode());
 
         // Save the SamAccountName for deletion in tearDown()
-        createdSamAccountName = "testuser3";
+
+        String deleteUrl = getBaseUrl() + "/users";
+        MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+        params.add("Identity", "testuser3");  // Use the Identity parameter for the filter
+
+        HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
+
+        ResponseEntity<String> deleteResponse = restTemplate.exchange(
+                deleteUrl,
+                HttpMethod.DELETE,
+                deleteEntity,
+                String.class
+        );
+
+        // Assert that the user was deleted successfully
+        assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
     }
 
     @Test
@@ -163,7 +177,22 @@ public class CommandIntegrationTest {
         assertEquals(HttpStatus.OK, updateResponse.getStatusCode());
         assertEquals(mockResult, updateResponse.getBody());
 
-        createdSamAccountName = "testuser4update";
+
+        String deleteUrl = getBaseUrl() + "/users";
+        MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+        params.add("Identity", "testuser4update");  // Use the Identity parameter for the filter
+
+        HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
+
+        ResponseEntity<String> deleteResponse = restTemplate.exchange(
+                deleteUrl,
+                HttpMethod.DELETE,
+                deleteEntity,
+                String.class
+        );
+
+        // Assert that the user was deleted successfully
+        assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
 
     }
 
@@ -191,26 +220,26 @@ public class CommandIntegrationTest {
         assertTrue(Objects.requireNonNull(response.getBody()).contains("testuser2"));
     }
 
-    @AfterEach
-    public void cleanup() {
-        if (createdSamAccountName != null) {
-
-            // Send DELETE request to remove the created user using the Identity filter
-            String deleteUrl = getBaseUrl() + "/users";
-            MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-            params.add("Identity", createdSamAccountName);  // Use the Identity parameter for the filter
-
-            HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
-
-            ResponseEntity<String> deleteResponse = restTemplate.exchange(
-                    deleteUrl,
-                    HttpMethod.DELETE,
-                    deleteEntity,
-                    String.class
-            );
-
-            // Assert that the user was deleted successfully
-            assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
-        }
-    }
+//    @AfterEach
+//    public void cleanup() {
+//        if (createdSamAccountName != null) {
+//
+//            // Send DELETE request to remove the created user using the Identity filter
+//            String deleteUrl = getBaseUrl() + "/users";
+//            MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+//            params.add("Identity", createdSamAccountName);  // Use the Identity parameter for the filter
+//
+//            HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
+//
+//            ResponseEntity<String> deleteResponse = restTemplate.exchange(
+//                    deleteUrl,
+//                    HttpMethod.DELETE,
+//                    deleteEntity,
+//                    String.class
+//            );
+//
+//            // Assert that the user was deleted successfully
+//            assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
+//        }
+//    }
 }
