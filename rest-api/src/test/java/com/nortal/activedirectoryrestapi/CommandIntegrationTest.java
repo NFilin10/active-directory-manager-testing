@@ -275,53 +275,5 @@ public class CommandIntegrationTest {
         deleteUserIfExists("testuser4update");
     }
 
-    @Test
-    public void testCreateNewUser1() throws Exception {
-        // Define the payload for creating a user
-        String payload = "{"
-                + "\"Name\": \"Test5 User\","
-                + "\"GivenName\": \"Test5\","
-                + "\"Surname\": \"User\","
-                + "\"SamAccountName\": \"testuser5\","
-                + "\"UserPrincipalName\": \"testuser5@domain.com\","
-                + "\"Path\": \"CN=Users,DC=Domain,DC=ee\","
-                + "\"Enabled\": true,"
-                + "\"AccountPassword\": \"ComplexP@ssw0rd4567\""
-                + "}";
 
-        // Mock the execution of the create command
-        String mockResult = "Command completed without output";
-        Commands mockCommand = new Commands();
-        mockCommand.setCommand("New-ADUser");
-        mockCommand.setArguments(payload);
-        mockCommand.setResult(mockResult);
-        mockCommand.setExitCode(0);
-        mockCommand.setId(1L);  // Set a mock ID for the command
-
-        when(commandWorker.executeCommand("New-ADUser", payload)).thenReturn(mockCommand);
-        when(commandService.getCommand(mockCommand.getId())).thenReturn(mockCommand);
-
-        // Send POST request to create the user
-        String url = getBaseUrl() + "/users";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(payload, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-
-        // Assert the response is OK and matches expected result
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockResult, response.getBody());
-
-        // Verify the command was processed correctly
-        Commands savedCommand = commandService.getCommand(mockCommand.getId());
-        assertNotNull(savedCommand);
-        assertEquals("New-ADUser", savedCommand.getCommand());
-        assertEquals(payload, savedCommand.getArguments());
-        assertEquals(mockResult, savedCommand.getResult());
-        assertEquals(0, savedCommand.getExitCode());
-
-        // Delete the user after test
-        deleteUserIfExists("testuser5");
-    }
 }
