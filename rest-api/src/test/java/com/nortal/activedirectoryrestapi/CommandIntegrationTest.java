@@ -52,69 +52,72 @@ public class CommandIntegrationTest {
     }
 
     @Test
-    public void testCreateNewUser() throws Exception {
-        // Define the payload for creating a user
-        String payload = "{"
-                + "\"Name\": \"Test3 User\","
-                + "\"GivenName\": \"Test3\","
-                + "\"Surname\": \"User\","
-                + "\"SamAccountName\": \"testuser3\","
-                + "\"UserPrincipalName\": \"testuser3@domain.com\","
-                + "\"Path\": \"CN=Users,DC=Domain,DC=ee\","
-                + "\"Enabled\": true,"
-                + "\"AccountPassword\": \"ComplexP@ssw0rd4567\""
-                + "}";
+public void testCreateNewUser() throws Exception {
+    // Define the payload for creating a user
+    String payload = "{"
+            + "\"Name\": \"Test3 User\","
+            + "\"GivenName\": \"Test3\","
+            + "\"Surname\": \"User\","
+            + "\"SamAccountName\": \"testuser3\","
+            + "\"UserPrincipalName\": \"testuser3@domain.com\","
+            + "\"Path\": \"CN=Users,DC=Domain,DC=ee\","
+            + "\"Enabled\": true,"
+            + "\"AccountPassword\": \"ComplexP@ssw0rd4567\""
+            + "}";
 
-        // Mock the execution of the create command
-        String mockResult = "Command completed without output";
-        Commands mockCommand = new Commands();
-        mockCommand.setCommand("New-ADUser");
-        mockCommand.setArguments(payload);
-        mockCommand.setResult(mockResult);
-        mockCommand.setExitCode(0);
-        mockCommand.setId(1L);  // Set a mock ID for the command
+    // Mock the execution of the create command
+    String mockResult = "Command completed without output";
+    Commands mockCommand = new Commands();
+    mockCommand.setCommand("New-ADUser");
+    mockCommand.setArguments(payload);
+    mockCommand.setResult(mockResult);
+    mockCommand.setExitCode(0);
+    mockCommand.setId(1L);  // Set a mock ID for the command
 
-        when(commandWorker.executeCommand("New-ADUser", payload)).thenReturn(mockCommand);
-        when(commandService.getCommand(mockCommand.getId())).thenReturn(mockCommand);
+    when(commandWorker.executeCommand("New-ADUser", payload)).thenReturn(mockCommand);
+    when(commandService.getCommand(mockCommand.getId())).thenReturn(mockCommand);
 
-        // Send POST request to create the user
-        String url = getBaseUrl() + "/users";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(payload, headers);
+    // Send POST request to create the user
+    String url = getBaseUrl() + "/users";
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    HttpEntity<String> entity = new HttpEntity<>(payload, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+    ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 
-        // Assert the response is OK and matches expected result
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(mockResult, response.getBody());
+    // Assert the response is OK and matches expected result
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(mockResult, response.getBody());
 
-        // Verify the command was processed correctly
-        Commands savedCommand = commandService.getCommand(mockCommand.getId());
-        assertNotNull(savedCommand);
-        assertEquals("New-ADUser", savedCommand.getCommand());
-        assertEquals(payload, savedCommand.getArguments());
-        assertEquals(mockResult, savedCommand.getResult());
-        assertEquals(0, savedCommand.getExitCode());
+    // Verify the command was processed correctly
+    Commands savedCommand = commandService.getCommand(mockCommand.getId());
+    assertNotNull(savedCommand);
+    assertEquals("New-ADUser", savedCommand.getCommand());
+    assertEquals(payload, savedCommand.getArguments());
+    assertEquals(mockResult, savedCommand.getResult());
+    assertEquals(0, savedCommand.getExitCode());
 
-        // // Save the SamAccountName for deletion in tearDown()
+    // Small pause before deletion (e.g., 1000 milliseconds = 1 second)
+    Thread.sleep(5000); // Delay for 1 second (adjust as needed)
 
-        // String deleteUrl = getBaseUrl() + "/users";
-        // MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-        // params.add("Identity", "testuser3");  // Use the Identity parameter for the filter
+    // Send DELETE request to remove the user
+    String deleteUrl = getBaseUrl() + "/users";
+    MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+    params.add("Identity", "testuser3");  // Use the Identity parameter for the filter
 
-        // HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
+    HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
 
-        // ResponseEntity<String> deleteResponse = restTemplate.exchange(
-        //         deleteUrl,
-        //         HttpMethod.DELETE,
-        //         deleteEntity,
-        //         String.class
-        // );
+    ResponseEntity<String> deleteResponse = restTemplate.exchange(
+            deleteUrl,
+            HttpMethod.DELETE,
+            deleteEntity,
+            String.class
+    );
 
-        // // Assert that the user was deleted successfully
-        // assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
-    }
+    // Assert that the user was deleted successfully
+    assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
+}
+
 
     @Test
     public void testUpdateUser() throws Exception {
