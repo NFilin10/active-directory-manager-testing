@@ -41,7 +41,6 @@ public class CommandIntegrationTest {
 
     private TestRestTemplate restTemplate;
 
-
     private String getBaseUrl() {
         return "http://localhost:" + port;
     }
@@ -49,75 +48,82 @@ public class CommandIntegrationTest {
     @BeforeEach
     public void setUp() {
         restTemplate = new TestRestTemplate();
+        // Cleanup before each test
+        deleteUserIfExists("testuser3");
+        deleteUserIfExists("testuser4update");
+    }
+
+    private void deleteUserIfExists(String samAccountName) {
+        // Try to delete the user if it exists
+        String deleteUrl = getBaseUrl() + "/users";
+        MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+        params.add("Identity", samAccountName);
+
+        HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
+
+        ResponseEntity<String> deleteResponse = restTemplate.exchange(
+                deleteUrl,
+                HttpMethod.DELETE,
+                deleteEntity,
+                String.class
+        );
+
+        if (deleteResponse.getStatusCode() == HttpStatus.OK) {
+            System.out.println("User " + samAccountName + " deleted successfully.");
+        } else {
+            System.out.println("User " + samAccountName + " not found or could not be deleted.");
+        }
     }
 
     @Test
-public void testCreateNewUser() throws Exception {
-    // Define the payload for creating a user
-    String payload = "{"
-            + "\"Name\": \"Test3 User\","
-            + "\"GivenName\": \"Test3\","
-            + "\"Surname\": \"User\","
-            + "\"SamAccountName\": \"testuser3\","
-            + "\"UserPrincipalName\": \"testuser3@domain.com\","
-            + "\"Path\": \"CN=Users,DC=Domain,DC=ee\","
-            + "\"Enabled\": true,"
-            + "\"AccountPassword\": \"ComplexP@ssw0rd4567\""
-            + "}";
+    public void testCreateNewUser() throws Exception {
+        // Define the payload for creating a user
+        String payload = "{"
+                + "\"Name\": \"Test3 User\","
+                + "\"GivenName\": \"Test3\","
+                + "\"Surname\": \"User\","
+                + "\"SamAccountName\": \"testuser3\","
+                + "\"UserPrincipalName\": \"testuser3@domain.com\","
+                + "\"Path\": \"CN=Users,DC=Domain,DC=ee\","
+                + "\"Enabled\": true,"
+                + "\"AccountPassword\": \"ComplexP@ssw0rd4567\""
+                + "}";
 
-    // Mock the execution of the create command
-    String mockResult = "Command completed without output";
-    Commands mockCommand = new Commands();
-    mockCommand.setCommand("New-ADUser");
-    mockCommand.setArguments(payload);
-    mockCommand.setResult(mockResult);
-    mockCommand.setExitCode(0);
-    mockCommand.setId(1L);  // Set a mock ID for the command
+        // Mock the execution of the create command
+        String mockResult = "Command completed without output";
+        Commands mockCommand = new Commands();
+        mockCommand.setCommand("New-ADUser");
+        mockCommand.setArguments(payload);
+        mockCommand.setResult(mockResult);
+        mockCommand.setExitCode(0);
+        mockCommand.setId(1L);  // Set a mock ID for the command
 
-    when(commandWorker.executeCommand("New-ADUser", payload)).thenReturn(mockCommand);
-    when(commandService.getCommand(mockCommand.getId())).thenReturn(mockCommand);
+        when(commandWorker.executeCommand("New-ADUser", payload)).thenReturn(mockCommand);
+        when(commandService.getCommand(mockCommand.getId())).thenReturn(mockCommand);
 
-    // Send POST request to create the user
-    String url = getBaseUrl() + "/users";
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    HttpEntity<String> entity = new HttpEntity<>(payload, headers);
+        // Send POST request to create the user
+        String url = getBaseUrl() + "/users";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(payload, headers);
 
-    ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 
-    // Assert the response is OK and matches expected result
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(mockResult, response.getBody());
+        // Assert the response is OK and matches expected result
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(mockResult, response.getBody());
 
-    // Verify the command was processed correctly
-    Commands savedCommand = commandService.getCommand(mockCommand.getId());
-    assertNotNull(savedCommand);
-    assertEquals("New-ADUser", savedCommand.getCommand());
-    assertEquals(payload, savedCommand.getArguments());
-    assertEquals(mockResult, savedCommand.getResult());
-    assertEquals(0, savedCommand.getExitCode());
+        // Verify the command was processed correctly
+        Commands savedCommand = commandService.getCommand(mockCommand.getId());
+        assertNotNull(savedCommand);
+        assertEquals("New-ADUser", savedCommand.getCommand());
+        assertEquals(payload, savedCommand.getArguments());
+        assertEquals(mockResult, savedCommand.getResult());
+        assertEquals(0, savedCommand.getExitCode());
 
-    // Small pause before deletion (e.g., 1000 milliseconds = 1 second)
-    Thread.sleep(5000); // Delay for 1 second (adjust as needed)
-
-    // Send DELETE request to remove the user
-    String deleteUrl = getBaseUrl() + "/users";
-    MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-    params.add("Identity", "testuser3");  // Use the Identity parameter for the filter
-
-    HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
-
-    ResponseEntity<String> deleteResponse = restTemplate.exchange(
-            deleteUrl,
-            HttpMethod.DELETE,
-            deleteEntity,
-            String.class
-    );
-
-    // Assert that the user was deleted successfully
-    assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
-}
-
+        // Delete the user after test
+        deleteUserIfExists("testuser3");
+    }
 
     @Test
     public void testUpdateUser() throws Exception {
@@ -180,26 +186,9 @@ public void testCreateNewUser() throws Exception {
         assertEquals(HttpStatus.OK, updateResponse.getStatusCode());
         assertEquals(mockResult, updateResponse.getBody());
 
-
-        String deleteUrl = getBaseUrl() + "/users";
-        MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-        params.add("Identity", "testuser4update");  // Use the Identity parameter for the filter
-
-        HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
-
-        ResponseEntity<String> deleteResponse = restTemplate.exchange(
-                deleteUrl,
-                HttpMethod.DELETE,
-                deleteEntity,
-                String.class
-        );
-
-        // Assert that the user was deleted successfully
-        assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
-
+        // Delete the user after test
+        deleteUserIfExists("testuser4update");
     }
-
-
 
     @Test
     public void testGetUsers() throws Exception {
@@ -222,27 +211,4 @@ public void testCreateNewUser() throws Exception {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(Objects.requireNonNull(response.getBody()).contains("testuser2"));
     }
-
-//    @AfterEach
-//    public void cleanup() {
-//        if (createdSamAccountName != null) {
-//
-//            // Send DELETE request to remove the created user using the Identity filter
-//            String deleteUrl = getBaseUrl() + "/users";
-//            MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-//            params.add("Identity", createdSamAccountName);  // Use the Identity parameter for the filter
-//
-//            HttpEntity<MultiValueMap<String, Object>> deleteEntity = new HttpEntity<>(params);
-//
-//            ResponseEntity<String> deleteResponse = restTemplate.exchange(
-//                    deleteUrl,
-//                    HttpMethod.DELETE,
-//                    deleteEntity,
-//                    String.class
-//            );
-//
-//            // Assert that the user was deleted successfully
-//            assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
-//        }
-//    }
 }
