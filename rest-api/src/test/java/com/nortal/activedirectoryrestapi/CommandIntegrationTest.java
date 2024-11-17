@@ -210,11 +210,6 @@ public class CommandIntegrationTest {
         assertTrue(Objects.requireNonNull(response.getBody()).contains("testuser2"));
     }
 
-    @Test
-    public void sample() {
-        assertEquals(2+2, 5);
-
-    }
 
     
 
