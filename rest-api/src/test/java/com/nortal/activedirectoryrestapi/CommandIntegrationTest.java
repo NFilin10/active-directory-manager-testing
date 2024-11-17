@@ -50,7 +50,7 @@ public class CommandIntegrationTest {
         restTemplate = new TestRestTemplate();       
     }
 
-    @AfterAll
+    @AfterEach
     public void clean(){
         deleteUserIfExists("testuser3");
         deleteUserIfExists("testuser4update");
