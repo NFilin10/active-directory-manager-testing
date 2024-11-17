@@ -53,7 +53,6 @@ public class CommandIntegrationTest {
     }
 
     @Test
-    @Order(1)
     public void testCreateNewUser() throws Exception {
         // Define the payload for creating a user
         String payload = "{"
@@ -104,7 +103,6 @@ public class CommandIntegrationTest {
     }
 
     @Test
-    @Order(2)
     public void testUpdateUser() throws Exception {
 
         // Create the user
@@ -172,7 +170,6 @@ public class CommandIntegrationTest {
 
 
     @Test
-    @Order(3)
     public void testGetUsers() throws Exception {
         MultiValueMap<String, Object> queryParams = new LinkedMultiValueMap<>();
         queryParams.add("Filter", "*");
