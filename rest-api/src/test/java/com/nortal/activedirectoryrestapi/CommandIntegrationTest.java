@@ -50,11 +50,6 @@ public class CommandIntegrationTest {
         restTemplate = new TestRestTemplate();       
     }
 
-    @AfterEach
-    public void clean(){
-        deleteUserIfExists("testuser3");
-        deleteUserIfExists("testuser4update");
-    }
 
     private void deleteUserIfExists(String samAccountName) {
         // Try to delete the user if it exists
