@@ -45,10 +45,13 @@ public class CommandIntegrationTest {
         return "http://localhost:" + port;
     }
 
-    @BeforeAll
+    @BeforeEach
     public void setUp() {
-        restTemplate = new TestRestTemplate();
-        // Cleanup before each test
+        restTemplate = new TestRestTemplate();       
+    }
+
+    @AfterAll
+    public void clean(){
         deleteUserIfExists("testuser3");
         deleteUserIfExists("testuser4update");
     }
