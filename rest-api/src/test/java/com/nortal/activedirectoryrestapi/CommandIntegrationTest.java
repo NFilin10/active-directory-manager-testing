@@ -45,7 +45,7 @@ public class CommandIntegrationTest {
         return "http://localhost:" + port;
     }
 
-    @BeforeEach
+    @BeforeAll
     public void setUp() {
         restTemplate = new TestRestTemplate();
         // Cleanup before each test
